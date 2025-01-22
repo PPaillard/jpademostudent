@@ -3,10 +3,12 @@ package com.learn.jpademo.controller;
 import com.learn.jpademo.entity.Student;
 import com.learn.jpademo.repository.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 
 @RestController
@@ -17,8 +19,8 @@ public class StudentController {
     private StudentRepository studentRepository;
 
     @PostMapping
-    public Student createStudent(@RequestBody Student student) {
-        return studentRepository.save(student);
+    public ResponseEntity<Student> createStudent(@RequestBody Student student) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(studentRepository.save(student));
     }
 
     @GetMapping
@@ -27,24 +29,37 @@ public class StudentController {
     }
 
     @GetMapping("/{id}")
-    public Student getStudentById(@PathVariable Long id) {
-        return studentRepository.findById(id).orElse(null);
+    public ResponseEntity<Student> getStudentById(@PathVariable Long id) {
+        Optional<Student> student = studentRepository.findById(id);
+        // si l'étudiant est présent, on le renvoit
+        if(student.isPresent()) {
+            return ResponseEntity.ok(student.get());
+        }
+        // sinon 404
+        return ResponseEntity.notFound().build();
     }
 
     @PutMapping("/{id}")
-    public Student updateStudent(@PathVariable Long id, @RequestBody Student studentDetails) {
+    public ResponseEntity<?> updateStudent(@PathVariable Long id, @RequestBody Student studentDetails) {
         Student student = studentRepository.findById(id).orElse(null);
         if (student != null) {
             student.setName(studentDetails.getName());
             student.setEmail(studentDetails.getEmail());
-            return studentRepository.save(student);
+            return ResponseEntity.noContent().build();
         }
-        return null;
+        // Je vous fais voir d'autres syntaxes
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
     @DeleteMapping("/{id}")
-    public void deleteStudent(@PathVariable Long id) {
-        studentRepository.deleteById(id);
+    public ResponseEntity<?> deleteStudent(@PathVariable Long id) {
+        boolean exists = studentRepository.existsById(id);
+        if(exists) {
+            studentRepository.deleteById(id);
+            return ResponseEntity.ok().build();
+        }
+        // sinon 404
+        return ResponseEntity.notFound().build();
     }
 
     @GetMapping("/getByName")
