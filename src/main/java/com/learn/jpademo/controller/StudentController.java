@@ -45,6 +45,7 @@ public class StudentController {
         if (student != null) {
             student.setName(studentDetails.getName());
             student.setEmail(studentDetails.getEmail());
+            repository.save(student);
             return ResponseEntity.noContent().build();
         }
         // Je vous fais voir d'autres syntaxes
